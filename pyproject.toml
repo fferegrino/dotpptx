@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "dotpptx"
+version = "0.1.0"
+description = ""
+authors = ["Antonio Feregrino <antonio.feregrino@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.scripts]
+dotpptx = "dotpptx.__main__:cli"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+click = "^8.1.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
