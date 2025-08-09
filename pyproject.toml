@@ -11,6 +11,11 @@ dependencies = [
     "click>=8.2.1",
 ]
 
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+]
+
 [project.scripts]
 dotpptx = "dotpptx.__main__:cli"
 

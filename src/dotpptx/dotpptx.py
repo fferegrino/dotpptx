@@ -2,8 +2,9 @@ import xml.dom.minidom
 import zipfile
 from pathlib import Path
 
+_COMPRESSION_LEVEL = zipfile.ZIP_DEFLATED
 
-def unpptx_file(pptx_folder, pptx_file):
+def unpptx_file(pptx_folder, pptx_file, pretty: bool = False):
     output_folder = Path(pptx_folder) / f"{pptx_file.stem}_pptx"
 
     with zipfile.ZipFile(pptx_file, "r") as zip_ref:
@@ -18,8 +19,9 @@ def unpptx_file(pptx_folder, pptx_file):
             with open(xml_file, "w") as f:
                 f.write(pretty_xml_as_string)
 
-    prettify_files("**/*.xml")
-    prettify_files("**/*.rels")
+    if pretty:
+        prettify_files("**/*.xml")
+        prettify_files("**/*.rels")
 
 
 def dopptx_folder(pptx_folder, pptx_exploded_folder):
@@ -28,4 +30,6 @@ def dopptx_folder(pptx_folder, pptx_exploded_folder):
 
     with zipfile.ZipFile(pptx_file, "w") as zip_ref:
         for file in pptx_exploded_folder.glob("**/*"):
-            zip_ref.write(file, file.relative_to(pptx_exploded_folder))
+            if file.is_dir():
+                continue
+            zip_ref.write(file, file.relative_to(pptx_exploded_folder), compress_type=_COMPRESSION_LEVEL)
