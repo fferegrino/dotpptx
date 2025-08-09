@@ -3,8 +3,10 @@ SHELL := /bin/bash
 # Convenience variables
 UVX := uvx
 BUMP := $(UVX) bump-my-version
+RUFF := $(UVX) ruff
+PYTEST := uv run pytest
 
-.PHONY: help show-bump version check-clean bump-patch bump-minor bump-major
+.PHONY: help show-bump version check-clean bump-patch bump-minor bump-major fmt lint test
 
 help: ## Show available targets
 	@echo "Available targets:"
@@ -13,6 +15,11 @@ help: ## Show available targets
 	@echo "  bump-patch       - Bump patch version (commit + tag)"
 	@echo "  bump-minor       - Bump minor version (commit + tag)"
 	@echo "  bump-major       - Bump major version (commit + tag)"
+	@echo "  fmt              - Format code"
+	@echo "  lint             - Lint code"
+	@echo "  unit             - Run unit tests"
+	@echo "  e2e              - Run end-to-end tests"
+	@echo "  test             - Run all tests"
 
 check-clean: ## Ensure git working tree is clean
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -35,4 +42,17 @@ bump-minor: check-clean ## Bump minor version (commit + tag)
 bump-major: check-clean ## Bump major version (commit + tag)
 	$(BUMP) bump major
 
+fmt:
+	$(RUFF) format
+	$(RUFF) check --fix
 
+lint:
+	$(RUFF) check
+
+unit:
+	$(PYTEST) tests/unit
+
+e2e:
+	$(PYTEST) tests/e2e
+
+test: unit e2e
