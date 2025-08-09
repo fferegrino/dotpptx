@@ -5,6 +5,7 @@ UVX := uvx
 BUMP := $(UVX) bump-my-version
 RUFF := $(UVX) ruff
 PYTEST := uv run pytest
+MYPY := uv run mypy
 
 .PHONY: help show-bump version check-clean bump-patch bump-minor bump-major fmt lint test
 
@@ -48,6 +49,7 @@ fmt:
 
 lint:
 	$(RUFF) check
+	$(MYPY) src
 
 unit:
 	$(PYTEST) tests/unit
