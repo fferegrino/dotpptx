@@ -4,13 +4,13 @@ from pathlib import Path
 
 _COMPRESSION_LEVEL = zipfile.ZIP_DEFLATED
 
-def unpptx_file(pptx_folder, pptx_file, pretty: bool = False):
+def unpptx_file(pptx_folder: Path, pptx_file: Path, pretty: bool = False) -> None:
     output_folder = Path(pptx_folder) / f"{pptx_file.stem}_pptx"
 
     with zipfile.ZipFile(pptx_file, "r") as zip_ref:
         zip_ref.extractall(output_folder)
 
-    def prettify_files(pattern):
+    def prettify_files(pattern: str) -> None:
         for xml_file in output_folder.glob(pattern):
             with open(xml_file, "r") as f:
                 xml_string = f.read()
@@ -24,7 +24,7 @@ def unpptx_file(pptx_folder, pptx_file, pretty: bool = False):
         prettify_files("**/*.rels")
 
 
-def dopptx_folder(pptx_folder, pptx_exploded_folder):
+def dopptx_folder(pptx_folder: Path, pptx_exploded_folder: Path) -> None:
     deck_name = pptx_exploded_folder.stem[:-5]
     pptx_file = Path(pptx_folder) / f"{deck_name}.pptx"
 
