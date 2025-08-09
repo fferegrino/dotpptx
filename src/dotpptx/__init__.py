@@ -30,5 +30,5 @@ Command Line Usage:
 
 from .dotpptx import dopptx_folder, unpptx_file
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __all__ = ["unpptx_file", "dopptx_folder"]
