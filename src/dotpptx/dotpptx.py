@@ -13,11 +13,20 @@ The module supports:
 Functions:
     unpptx_file: Extract a PowerPoint file into component XML/media files
     dopptx_folder: Repackage an extracted directory back into a .pptx file
+
+Note:
+    This module uses Python's logging module for debug/info messages. By default,
+    these are not displayed. To enable logging output when using this module
+    programmatically, configure the logging module before calling these functions.
+
 """
 
+import logging
 import xml.dom.minidom
 import zipfile
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 # Compression level used when creating .pptx files (ZIP_DEFLATED provides good compression)
 _COMPRESSION_LEVEL = zipfile.ZIP_DEFLATED
@@ -43,6 +52,10 @@ def unpptx_file(pptx_folder: Path, pptx_file: Path, *, pretty: bool) -> None:
         None: The function creates a directory named "{pptx_file.stem}_pptx"
               containing all extracted files.
 
+    Raises:
+        ValueError: If the file is not a valid PowerPoint file or has wrong extension.
+        FileNotFoundError: If the specified pptx_file does not exist.
+
     Example:
         >>> from pathlib import Path
         >>> unpptx_file(Path("/presentations"), Path("/presentations/demo.pptx"), pretty=True)
@@ -59,10 +72,26 @@ def unpptx_file(pptx_folder: Path, pptx_file: Path, *, pretty: bool) -> None:
         - [Content_Types].xml - MIME type definitions
 
     """
-    output_folder = Path(pptx_folder) / f"{pptx_file.stem}_pptx"
+    logger.debug(f"Starting extraction of {pptx_file}")
 
-    with zipfile.ZipFile(pptx_file, "r") as zip_ref:
-        zip_ref.extractall(output_folder)
+    if not pptx_file.exists():
+        logger.error(f"File not found: {pptx_file}")
+        raise FileNotFoundError(f"File not found: {pptx_file}")
+
+    if pptx_file.suffix.lower() != ".pptx":
+        logger.error(f"Invalid file extension: {pptx_file.suffix}")
+        raise ValueError(f"File must have .pptx extension, got {pptx_file.suffix}")
+
+    output_folder = Path(pptx_folder) / f"{pptx_file.stem}_pptx"
+    logger.info(f"Extracting {pptx_file.name} to {output_folder}")
+
+    try:
+        with zipfile.ZipFile(pptx_file, "r") as zip_ref:
+            zip_ref.extractall(output_folder)
+        logger.info(f"Successfully extracted {len(list(output_folder.rglob('*')))} items")
+    except zipfile.BadZipFile as e:
+        logger.error(f"Invalid PowerPoint file: {pptx_file}")
+        raise ValueError(f"{pptx_file} is not a valid PowerPoint file") from e
 
     def prettify_files(pattern: str) -> None:
         """
@@ -72,7 +101,9 @@ def unpptx_file(pptx_folder: Path, pptx_file: Path, *, pretty: bool) -> None:
             pattern: Glob pattern to match files for prettification (e.g., "**/*.xml").
 
         """
-        for xml_file in output_folder.glob(pattern):
+        files = list(output_folder.glob(pattern))
+        logger.debug(f"Prettifying {len(files)} files matching pattern '{pattern}'")
+        for xml_file in files:
             with open(xml_file) as f:
                 xml_string = f.read()
                 dom = xml.dom.minidom.parseString(xml_string)
@@ -81,6 +112,7 @@ def unpptx_file(pptx_folder: Path, pptx_file: Path, *, pretty: bool) -> None:
                 f.write(pretty_xml_as_string)
 
     if pretty:
+        logger.debug("Prettifying XML and rels files")
         prettify_files("**/*.xml")
         prettify_files("**/*.rels")
 
@@ -103,6 +135,10 @@ def dopptx_folder(pptx_folder: Path, pptx_exploded_folder: Path) -> None:
     Returns:
         None: The function creates a .pptx file in the pptx_folder directory.
 
+    Raises:
+        ValueError: If the folder doesn't end with "_pptx" suffix.
+        FileNotFoundError: If the exploded folder doesn't exist.
+
     Example:
         >>> from pathlib import Path
         >>> dopptx_folder(Path("/presentations"), Path("/presentations/demo_pptx"))
@@ -114,18 +150,27 @@ def dopptx_folder(pptx_folder: Path, pptx_exploded_folder: Path) -> None:
         in the exploded folder are included in the final .pptx archive with
         ZIP_DEFLATED compression.
 
-    Raises:
-        The function may raise exceptions if:
-        - The exploded folder doesn't exist or lacks required components
-        - There are permission issues writing to the target directory
-        - The XML structure is invalid or corrupted
-
     """
+    logger.debug(f"Starting repackaging of {pptx_exploded_folder}")
+
+    if not pptx_exploded_folder.exists():
+        logger.error(f"Folder not found: {pptx_exploded_folder}")
+        raise FileNotFoundError(f"Folder not found: {pptx_exploded_folder}")
+
+    if not pptx_exploded_folder.name.endswith("_pptx"):
+        logger.error(f"Folder must end with '_pptx' suffix: {pptx_exploded_folder.name}")
+        raise ValueError(f"Folder must end with '_pptx' suffix, got {pptx_exploded_folder.name}")
+
     deck_name = pptx_exploded_folder.stem[:-5]
     pptx_file = Path(pptx_folder) / f"{deck_name}.pptx"
+    logger.info(f"Repackaging {pptx_exploded_folder.name} to {pptx_file.name}")
 
+    file_count = 0
     with zipfile.ZipFile(pptx_file, "w") as zip_ref:
         for file in pptx_exploded_folder.glob("**/*"):
             if file.is_dir():
                 continue
             zip_ref.write(file, file.relative_to(pptx_exploded_folder), compress_type=_COMPRESSION_LEVEL)
+            file_count += 1
+
+    logger.info(f"Successfully created {pptx_file.name} with {file_count} files")
