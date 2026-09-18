@@ -7,7 +7,7 @@ RUFF := $(UVX) ruff
 PYTEST := uv run pytest
 MYPY := uv run mypy
 
-.PHONY: help show-bump version check-clean bump-patch bump-minor bump-major fmt lint test
+.PHONY: help show-bump version check-clean bump-patch bump-minor bump-major fmt lint test coverage coverage-html coverage-report
 
 help: ## Show available targets
 	@echo "Available targets:"
@@ -21,6 +21,9 @@ help: ## Show available targets
 	@echo "  unit             - Run unit tests"
 	@echo "  e2e              - Run end-to-end tests"
 	@echo "  test             - Run all tests"
+	@echo "  coverage         - Run tests with coverage report"
+	@echo "  coverage-html    - Generate HTML coverage report"
+	@echo "  coverage-report  - Show detailed coverage report"
 
 check-clean: ## Ensure git working tree is clean
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -58,3 +61,16 @@ e2e:
 	$(PYTEST) tests/e2e
 
 test: unit e2e
+
+coverage:
+	$(PYTEST) --cov=dotpptx --cov-report=term-missing tests/
+
+coverage-html:
+	$(PYTEST) --cov=dotpptx --cov-report=html --cov-report=term tests/
+	@echo "Coverage report generated in htmlcov/index.html"
+
+coverage-report:
+	$(PYTEST) --cov=dotpptx --cov-report=term-missing --cov-report=html tests/
+	@echo ""
+	@echo "Detailed coverage report:"
+	@$(PYTEST) --cov=dotpptx --cov-report=term tests/ --quiet

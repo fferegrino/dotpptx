@@ -2,3 +2,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 .DS_Store
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage.xml
+*.cover
