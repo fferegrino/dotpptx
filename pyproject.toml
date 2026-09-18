@@ -14,6 +14,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "pytest>=8.4.1",
+    "pytest-cov>=4.1.0",
     "mypy>=1.10.0",
     "ruff>=0.12.8",
 ]
@@ -70,6 +71,43 @@ known-first-party = ["dotpptx"]
     "D203", # One blank line before class
     "D212", # Multiline summary second line
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--showlocals",
+]
+
+[tool.coverage.run]
+source = ["src"]
+branch = true
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/.venv/*",
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
 
 [tool.mypy]
 python_version = "3.10"
